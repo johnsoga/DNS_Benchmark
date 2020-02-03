@@ -36,8 +36,6 @@ void getProviderName(char *string, char buf[], int len) {
     // proivder is the second item in the comma delimited line
     int i, j, count = 0;
 
-    printf("str is %s\n", string);
-
     //TODO: ERROR HANDELING
     for(i = 0; i < strlen(string); i++) {
         if(string[i] == ',') {
