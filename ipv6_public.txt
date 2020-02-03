@@ -1,0 +1,16 @@
+2001:4860:4860::8888, Google
+2001:4860:4860::8844, Google
+2620:fe::fe, Quad9
+2620:fe::9, Quad9
+2620:119:35::35, OpenDNS
+2620:119:53::53, OpenDNS
+2606:4700:4700::1111, Cloudflare
+2606:4700:4700::1001, Cloudflare
+2a0d:2a00:1::2, CleanBrowsing
+2a0d:2a00:2::2, CleanBrowsing
+2620:74:1b::1:1, Verisign
+2620:74:1c::2:2, Verisign
+2001:4800:780e:510:a8cf:392e:ff04:8982, Alternate DNS
+2001:4801:7825:103:be76:4eff:fe10:2e49, Alternate DNS
+2a00:5a60::ad1:0ff, AdGuard DNS
+2a00:5a60::ad2:0ff, AdGuard DNS
