@@ -49,8 +49,6 @@ void getProviderName(char *string, char buf[], int len) {
                 i++;
             }
             buf[j] = '\0';
-            printf("returning -%s-\n", buf);
-            printf("str is still %s\n", string);
             return;
         }
     }
