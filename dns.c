@@ -76,9 +76,9 @@ void closeConnection() {
 void printTime(struct timeval time) {
 
     if(time.tv_sec > 0) {
-        printf("request took: %ld.%ds\n", time.tv_sec, time.tv_usec);
+        printf("request took: %ld.%lds\n", time.tv_sec, time.tv_usec);
     } else {
-        printf("request took: %dms\n", (time.tv_usec/1000));
+        printf("request took: %ldms\n", (time.tv_usec/1000));
     }
 }
 void sendData() {
