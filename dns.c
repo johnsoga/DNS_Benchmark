@@ -166,7 +166,7 @@ void readDNSList(char *filename) {
 
     while (fgets(str, MAX_LINE_LENGTH, fp) != NULL) {
         getIP(str, buf_ip, MAX_IP_LENGTH);
-        // getProviderName(str, buf_prvd, MAX_PROVIDER_NAME);
+        getProviderName(str, buf_prvd, MAX_PROVIDER_NAME);
         printf("IP: %s\t Provider: %s\n", server_ip, provider_name);
         createConnection(server_ip);
         sendData();
