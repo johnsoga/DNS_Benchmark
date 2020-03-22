@@ -13,6 +13,7 @@
 #define MAX_LINE_LENGTH 1000
 #define MAX_PROVIDER_NAME 30
 #define MAX_IP_LENGTH 16
+#define MAX_ATTEMPTS 3
 
 const char *host = "google.com";
 int socket_fd;
@@ -73,15 +74,7 @@ void closeConnection() {
         exit(1);
     }
 }
-void printTime(struct timeval time) {
-
-    if(time.tv_sec > 0) {
-        printf("request took: %ld.%lds\n", time.tv_sec, time.tv_usec);
-    } else {
-        printf("request took: %ldms\n", (time.tv_usec/1000));
-    }
-}
-void sendData() {
+struct timeval sendData() {
 
     int i, message_len, rtn, offset, len, qname_size;
     struct DNS_HEADER *dns = NULL;
@@ -143,7 +136,7 @@ void sendData() {
 
     result.tv_sec = t2.tv_sec - t1.tv_sec;
     result.tv_usec = t2.tv_usec - t1.tv_usec;
-    printTime(result);
+    return result;
 }
 void readDNSList(char *filename) {
 
@@ -152,8 +145,10 @@ void readDNSList(char *filename) {
     char *token;
     char buf_ip[MAX_IP_LENGTH], buf_prvd[MAX_PROVIDER_NAME];
     char *server_ip = buf_ip, *provider_name = buf_prvd;
-
-
+    struct timeval total_time;
+    struct timeval avg_time;
+    int count;
+    
     fp = fopen(filename, "r");
     if (fp == NULL) {
         perror("File Open Error");
@@ -163,9 +158,21 @@ void readDNSList(char *filename) {
     while (fgets(str, MAX_LINE_LENGTH, fp) != NULL) {
         getIP(str, buf_ip, MAX_IP_LENGTH);
         getProviderName(str, buf_prvd, MAX_PROVIDER_NAME);
-        printf("IP: %s\t Provider: %s\n", server_ip, provider_name);
-        createConnection(server_ip);
-        sendData();
+        printf("Provider: %-15s\tIP: %s\n", provider_name, server_ip);
+
+        for(count = 0; count < MAX_ATTEMPTS; count++) {
+            createConnection(server_ip);
+            total_time = sendData();
+            avg_time.tv_sec += total_time.tv_sec;
+            avg_time.tv_usec += total_time.tv_usec;
+            if(total_time.tv_sec > 0) {
+                printf("Time: %ld.%lds\t", total_time.tv_sec, total_time.tv_usec);
+            } else {
+                printf("Time: %ldms\t", (total_time.tv_usec/1000));
+            }
+        }
+
+        printf("Avg: \n");
         closeConnection();
     }
 
