@@ -10,7 +10,5 @@
 185.228.169.9, CleanBrowsing,
 64.6.64.6, Verisign,
 64.6.65.6, Verisign,
-198.101.242.72, Alternate DNS,
-23.253.163.53, Alternate DNS,
 176.103.130.130, AdGuard DNS,
 176.103.130.131, AdGuard DNS,
