@@ -6,9 +6,10 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/time.h>
+#include <time.h>
+#include <sys/queue.h>
 #include "dns_types.h"
-#include "data_struct.h"
+#include "ds.h"
 
 #define BUFFER_SIZE 512 // https://tools.ietf.org/html/rfc1035 Section  4.2.1
 #define MAX_LINE_LENGTH 1000
@@ -16,10 +17,6 @@
 #define MAX_IP_LENGTH 16
 #define MAX_ATTEMPTS 50
 
-// LinkedList *serverList;
-node *serverList;
-// serverList->HEAD = NULL;
-// serverList->size = 0;
 const char *host = "google.com";
 int socket_fd;
 int count_average_time = 0;
@@ -27,6 +24,22 @@ struct sockaddr_in server;
 struct timespec average_time;
 int DEBUG_ON = 1;
 
+llist* server_list;
+
+// Utility Functions
+void printList(llist* list) {
+    printf("Printing List...\n");
+    node_t* tmp = list->head;
+    int count = 1;
+    while (tmp != NULL) {
+        printf("Element %d:\t %s, %s\n", count, ((dnshost *)tmp->data)->DNSProviderName, ((dnshost *)tmp->data)->DNSProviderIP);
+        tmp = tmp->next;
+        count++;
+    }
+    printf("\n");
+}
+
+/*
 void averageTime(struct timespec new_time) {
 
     count_average_time++;
@@ -230,13 +243,15 @@ void readDNSList(char *filename) {
     fclose(fp);
 }
 
-dnsserver parseDNSServer(char str_buf[]) {
+*/
+
+dnshost* parseDNSServer(char str_buf[]) {
 
     int counter;
     int position = 0;
     char buf_ip[MAX_IP_LENGTH];
     char buf_prvd[MAX_PROVIDER_NAME];
-    dnsserver *tmp = malloc(sizeof(dnsserver));
+    dnshost* tmp = malloc(sizeof(dnshost));
 
     // Get the DNS Server IP
     counter = 0;
@@ -270,12 +285,12 @@ dnsserver parseDNSServer(char str_buf[]) {
         counter++;
     }
 
-    return *tmp;
+    return tmp;
 }
-void loadDNSList(char *filename) {
+void loadDNSFile(char* filename) {
 
     FILE *fp;
-    dnsserver dnsserver;
+    dnshost* dns_server;
     char str_buf[MAX_LINE_LENGTH];
 
     fp = fopen(filename, "r");
@@ -284,20 +299,18 @@ void loadDNSList(char *filename) {
         exit(1);
     }
 
-    // printf("success");
-    printf("%d", serverList->size);
-    // printf("fail");
-
-    // while (fgets(str_buf, MAX_LINE_LENGTH, fp) != NULL) {
-    //     dnsserver = parseDNSServer(str_buf);
-    //     insertAtPostion(serverList, 1, &dnsserver);
-    //     // printf("%s:%s\n", dnsserver.DNSProviderName, dnsserver.DNSProviderIP);
-    // }
+    while (fgets(str_buf, MAX_LINE_LENGTH, fp) != NULL) {
+        dns_server = parseDNSServer(str_buf);
+        insertLast(server_list, (void *)dns_server);
+    }
     fclose(fp);
 }
+
 int main(int argc, char **argv) {
 
-    loadDNSList(argv[1]);
+    server_list = create_list();
+    loadDNSFile(argv[1]);
+    printList(server_list);
 
     // readDNSList(argv[1]);
 }
