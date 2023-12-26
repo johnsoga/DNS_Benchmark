@@ -2,3 +2,4 @@ dns
 *.o
 scrap.txt
 main
+check_ds_tests
