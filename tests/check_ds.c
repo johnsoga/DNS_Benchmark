@@ -1,6 +1,7 @@
 #include <check.h>
 #include <stdlib.h>
 #include "../ds.h"
+#include "../dns_types.h"
 
 START_TEST (test_ds_create) {
     
@@ -14,45 +15,55 @@ START_TEST (test_ds_insertions) {
     llist* list;
     list = create_list();
 
-    char* a = malloc(sizeof(char)*3);
-    char* b = malloc(sizeof(char)*3);
-    char* c = malloc(sizeof(char)*3);
-    char* d = malloc(sizeof(char)*3);
-    char* e = malloc(sizeof(char)*3);
-    char* f = malloc(sizeof(char)*3);
+    dnshost* pos_a = malloc(sizeof(dnshost));
+    dnshost* pos_b = malloc(sizeof(dnshost));
+    dnshost* pos_c = malloc(sizeof(dnshost));
+    dnshost* pos_d = malloc(sizeof(dnshost));
+    dnshost* pos_e = malloc(sizeof(dnshost));
+    dnshost* pos_f = malloc(sizeof(dnshost));
+    dnshost* pos_g = malloc(sizeof(dnshost));
+    dnshost* pos_h = malloc(sizeof(dnshost));
 
-    strcpy(a, "42");
-    strcpy(b, "13");
-    strcpy(c, "99");
-    strcpy(d, "02");
-    strcpy(e, "04");
-    strcpy(f, "06");
+    strcpy(pos_a->DNSProviderName, "position-a.com");
+    strcpy(pos_b->DNSProviderName, "position-b.com");
+    strcpy(pos_c->DNSProviderName, "position-c.com");
+    strcpy(pos_d->DNSProviderName, "position-d.com");
+    strcpy(pos_e->DNSProviderName, "position-e.com");
+    strcpy(pos_f->DNSProviderName, "position-f.com");
+    strcpy(pos_g->DNSProviderName, "position-g.com");
+    strcpy(pos_h->DNSProviderName, "position-h.com");
 
-    insertFirst(list, (void*)a);
-    insertFirst(list, (void*)b);
-    insertFirst(list, (void*)c);
+    insertLast(list, (void*)pos_f);
+    insertLast(list, (void*)pos_h);
+    insertFirst(list, (void*)pos_b);
+    insertFirst(list, (void*)pos_a);
+    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "position-a.com");
+    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "position-b.com");
+    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "position-f.com");
+    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "position-h.com");
+    ck_assert_int_eq(list->size, 4);
 
-    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "99");
-    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "13");
-    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "42");
+    insertAt(list, (void*)pos_c, 3);
+    insertAt(list, (void*)pos_d, 4);
+    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "position-a.com");
+    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "position-b.com");
+    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "position-c.com");
+    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "position-d.com");
+    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "position-f.com");
+    ck_assert_pstr_eq((char *)getAt(list, 6)->data, "position-h.com");
+    ck_assert_int_eq(list->size, 6);
 
-    insertAt(list, (void*)d, 1);
-    insertAt(list, (void*)e, 4);
-
-    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "02");
-    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "99");
-    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "13");
-    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "04");
-    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "42");
-    
-    insertLast(list, (void*)f);
-
-    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "02");
-    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "99");
-    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "13");
-    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "04");
-    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "42");
-    ck_assert_pstr_eq((char *)getAt(list, 6)->data, "06");
+    insertAt(list, (void*)pos_e, 5);
+    insertAt(list, (void*)pos_g, 7);
+    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "position-a.com");
+    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "position-b.com");
+    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "position-c.com");
+    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "position-d.com");
+    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "position-e.com");
+    ck_assert_pstr_eq((char *)getAt(list, 6)->data, "position-f.com");
+    ck_assert_pstr_eq((char *)getAt(list, 7)->data, "position-g.com");
+    ck_assert_pstr_eq((char *)getAt(list, 8)->data, "position-h.com");
+    ck_assert_int_eq(list->size, 8);
 
 } END_TEST
 START_TEST (test_ds_removals) {
@@ -60,50 +71,63 @@ START_TEST (test_ds_removals) {
     llist* list;
     list = create_list();
 
-    char* a = malloc(sizeof(char)*3);
-    char* b = malloc(sizeof(char)*3);
-    char* c = malloc(sizeof(char)*3);
-    char* d = malloc(sizeof(char)*3);
-    char* e = malloc(sizeof(char)*3);
-    char* f = malloc(sizeof(char)*3);
+    dnshost* pos_a = malloc(sizeof(dnshost));
+    dnshost* pos_b = malloc(sizeof(dnshost));
+    dnshost* pos_c = malloc(sizeof(dnshost));
+    dnshost* pos_d = malloc(sizeof(dnshost));
+    dnshost* pos_e = malloc(sizeof(dnshost));
+    dnshost* pos_f = malloc(sizeof(dnshost));
+    dnshost* pos_g = malloc(sizeof(dnshost));
+    dnshost* pos_h = malloc(sizeof(dnshost));
 
-    strcpy(a, "42");
-    strcpy(b, "13");
-    strcpy(c, "99");
-    strcpy(d, "02");
-    strcpy(e, "04");
-    strcpy(f, "06");
+    strcpy(pos_a->DNSProviderName, "position-a.com");
+    strcpy(pos_b->DNSProviderName, "position-b.com");
+    strcpy(pos_c->DNSProviderName, "position-c.com");
+    strcpy(pos_d->DNSProviderName, "position-d.com");
+    strcpy(pos_e->DNSProviderName, "position-e.com");
+    strcpy(pos_f->DNSProviderName, "position-f.com");
+    strcpy(pos_g->DNSProviderName, "position-g.com");
+    strcpy(pos_h->DNSProviderName, "position-h.com");
 
-    insertFirst(list, (void*)a);
-    insertFirst(list, (void*)b);
-    insertFirst(list, (void*)c);
-    insertAt(list, (void*)d, 1);
-    insertAt(list, (void*)e, 4);
-    insertLast(list, (void*)f);
+    insertLast(list, (void*)pos_f);
+    insertLast(list, (void*)pos_h);
+    insertFirst(list, (void*)pos_b);
+    insertFirst(list, (void*)pos_a);
+    insertAt(list, (void*)pos_c, 3);
+    insertAt(list, (void*)pos_d, 4);
+    insertAt(list, (void*)pos_e, 5);
+    insertAt(list, (void*)pos_g, 7);
+    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "position-a.com");
+    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "position-b.com");
+    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "position-c.com");
+    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "position-d.com");
+    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "position-e.com");
+    ck_assert_pstr_eq((char *)getAt(list, 6)->data, "position-f.com");
+    ck_assert_pstr_eq((char *)getAt(list, 7)->data, "position-g.com");
+    ck_assert_pstr_eq((char *)getAt(list, 8)->data, "position-h.com");
+    ck_assert_int_eq(list->size, 8);
 
-    removeAt(list, 6);
-    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "02");
-    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "99");
-    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "13");
-    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "04");
-    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "42");
-    ck_assert_int_eq(list->size, 5);
-
+    removeAt(list, 8);
     removeAt(list, 1);
-    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "99");
-    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "13");
-    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "04");
-    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "42");
-    ck_assert_int_eq(list->size, 4);
+    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "position-b.com");
+    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "position-c.com");
+    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "position-d.com");
+    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "position-e.com");
+    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "position-f.com");
+    ck_assert_pstr_eq((char *)getAt(list, 6)->data, "position-g.com");
+    ck_assert_int_eq(list->size, 6);
 
-    removeAt(list, 3);
-    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "99");
-    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "13");
-    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "42");
-    ck_assert_int_eq(list->size, 3);
+    removeAt(list, 4);
+    ck_assert_pstr_eq((char *)getAt(list, 1)->data, "position-b.com");
+    ck_assert_pstr_eq((char *)getAt(list, 2)->data, "position-c.com");
+    ck_assert_pstr_eq((char *)getAt(list, 3)->data, "position-d.com");
+    ck_assert_pstr_eq((char *)getAt(list, 4)->data, "position-f.com");
+    ck_assert_pstr_eq((char *)getAt(list, 5)->data, "position-g.com");
+    ck_assert_int_eq(list->size, 5);
 
     clear(list);
     ck_assert(isEmpty(list));
+    
 } END_TEST
 Suite *ds_suite(void) {
     Suite *s;
