@@ -22,7 +22,7 @@ test: ds.o check_ds.o
 	./check_ds_tests
 
 clean:
-	rm *.o
+	rm -f *.o
 
 cleanall: clean
-	rm main
+	rm -f main check_ds_tests
