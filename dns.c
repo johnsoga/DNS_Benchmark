@@ -13,8 +13,6 @@
 
 #define BUFFER_SIZE 512 // https://tools.ietf.org/html/rfc1035 Section  4.2.1
 #define MAX_LINE_LENGTH 1000
-#define MAX_PROVIDER_NAME 30
-#define MAX_IP_LENGTH 16
 #define MAX_ATTEMPTS 50
 
 const char *host = "google.com";
@@ -39,7 +37,6 @@ void printList(llist* list) {
     printf("\n");
 }
 
-/*
 void averageTime(struct timespec new_time) {
 
     count_average_time++;
@@ -50,39 +47,6 @@ void averageTime(struct timespec new_time) {
         average_time.tv_nsec = (1000000000 - average_time.tv_nsec) - new_time.tv_nsec;
     } else {
         average_time.tv_nsec += new_time.tv_nsec;
-    }
-}
-void getIP(char *string, char buf[], int len) {
-
-    int i;
-
-    for(i = 0; i < strlen(string); i++) {
-        if(string[i] != ',') {
-            buf[i] = string[i];
-        } else {
-            buf[i] = '\0';
-            return;
-        }
-    }
-}
-void getProviderName(char *string, char buf[], int len) {
-
-    // proivder is the second item in the comma delimited line
-    int i, j, count = 0;
-
-    //TODO: ERROR HANDELING
-    for(i = 0; i < strlen(string); i++) {
-        if(string[i] == ',') {
-            j = 0;
-            i++;
-            while(string[i] != ',') {
-                buf[j] = string[i];
-                j++;
-                i++;
-            }
-            buf[j] = '\0';
-            return;
-        }
     }
 }
 void createConnection(char *server_ip) {
@@ -118,16 +82,16 @@ void closeConnection() {
 struct timespec sendData() {
 
     int i, message_len, rtn, offset, len, qname_size;
-    struct DNS_HEADER *dns = NULL;
+    DNS_HEADER *dns = NULL;
     char rcv_buf[BUFFER_SIZE];
     qname_size = strlen(host) + 1;
-    message_len = sizeof(struct DNS_HEADER) + qname_size + 5;
+    message_len = sizeof(DNS_HEADER) + qname_size + 5;
     unsigned char message[message_len];
     unsigned short flags = 0, qd_count = 0, an_count = 0, ns_count = 0, ar_count = 0, qtype = 0, qclass = 0;
     struct timespec start, end, result;
 
     // put the DNS Header info into the buffer
-    dns = (struct DNS_HEADER*)&message;
+    dns = (DNS_HEADER*)&message;
     dns->id = (unsigned short)getpid();             // set id
     flags = flags ^ 0x0000;                         // set query                0... .... .... ....
     flags = flags ^ 0x0000;                         // set opcode               .000 0... .... ....
@@ -145,7 +109,7 @@ struct timespec sendData() {
 
 
     // put the QNAME, QTYPE, and QCLASS info into the buffer
-    offset = sizeof(struct DNS_HEADER);
+    offset = sizeof(DNS_HEADER);
     char hostname[100];
     strncpy(hostname, host, strlen(host));
     char *tmp = hostname, *token;
@@ -188,31 +152,41 @@ struct timespec sendData() {
 
     return result;
 }
-void readDNSList(char *filename) {
+void readDNSList() {
 
     FILE *fp;
     char str[MAX_LINE_LENGTH];
     char *token;
-    char buf_ip[MAX_IP_LENGTH], buf_prvd[MAX_PROVIDER_NAME];
+    char buf_ip[MAX_IP_LENGTH], buf_prvd[MAX_PROVIDER_LENGTH];
     char *server_ip = buf_ip, *provider_name = buf_prvd;
     struct timespec total_time;
     struct timespec avg_time;
     int count;
     int debug_counter;
 
-    fp = fopen(filename, "r");
-    if (fp == NULL) {
-        perror("File Open Error\n");
-        exit(1);
-    }
+    char *new_name;
+    char *new_ip;
+    dnshost *new_dnshost;
+    int checker = 1;
 
     average_time.tv_sec = 0;
     average_time.tv_nsec = 0;
-    while (fgets(str, MAX_LINE_LENGTH, fp) != NULL) {
-        getIP(str, buf_ip, MAX_IP_LENGTH);
-        getProviderName(str, buf_prvd, MAX_PROVIDER_NAME);
-        printf("Provider: %-15s\tIP: %s\n", provider_name, server_ip);
+    printf("List is Size: %d\n", server_list->size);
+    while (!isEmpty(server_list)) {
+        // printf("Iteration %d", checker);
+        removeAt(server_list, 1);
+        //new_name = new_dnshost->DNSProviderName;
+        //new_ip = new_dnshost->DNSProviderIP;
+        //printf("Provider: %-15s\tIP: %s\n", new_name, new_ip);
+        // printf("isEmpty: %d", isEmpty(server_list));
+        // checker++;
+        //strcpy(buf_ip, ((dnshost *)(removeAt(server_list, 1)->data))->DNSProviderIP);
+        //getIP(str, buf_ip, MAX_IP_LENGTH);
+        //strcpy(buf_prvd, ((dnshost *)(removeAt(server_list, 1)->data))->DNSProviderName);
+        //getProviderName(str, buf_prvd, MAX_PROVIDER_NAME);
+        // printf("Provider: %-15s\tIP: %s\n", provider_name, server_ip);
 
+/*
         for(count = 0, debug_counter = 0; count < MAX_ATTEMPTS; count++, debug_counter++) {
             createConnection(server_ip);
             total_time = sendData();
@@ -236,21 +210,19 @@ void readDNSList(char *filename) {
         } else {
             printf("Average: %ldms\n", (average_time.tv_nsec/1000000/count_average_time));
         }
+*/
         average_time.tv_sec = 0;
         average_time.tv_nsec = 0;
     }
-
     fclose(fp);
 }
-
-*/
 
 dnshost* parseDNSServer(char str_buf[]) {
 
     int counter;
     int position = 0;
     char buf_ip[MAX_IP_LENGTH];
-    char buf_prvd[MAX_PROVIDER_NAME];
+    char buf_prvd[MAX_PROVIDER_LENGTH];
     dnshost* tmp = malloc(sizeof(dnshost));
 
     // Get the DNS Server IP
@@ -260,7 +232,7 @@ dnshost* parseDNSServer(char str_buf[]) {
             buf_ip[counter] = str_buf[position];
         } else {
             buf_ip[counter] = '\0';
-            tmp->DNSProviderIP = malloc(sizeof(buf_ip));
+            //tmp->DNSProviderIP = malloc(sizeof(buf_ip));
             strcpy(tmp->DNSProviderIP, buf_ip);
             position++;
             break;
@@ -276,7 +248,7 @@ dnshost* parseDNSServer(char str_buf[]) {
             buf_prvd[counter] = str_buf[position];
         } else {
             buf_prvd[counter] = '\0';
-            tmp->DNSProviderName = malloc(sizeof(buf_prvd));
+            //tmp->DNSProviderName = malloc(sizeof(buf_prvd));
             strcpy(tmp->DNSProviderName, buf_prvd);
             position++;
             break;
@@ -310,7 +282,8 @@ int main(int argc, char **argv) {
 
     server_list = create_list();
     loadDNSFile(argv[1]);
-    printList(server_list);
-
+    // printList(server_list);
+    readDNSList();
+    // printList(server_list);
     // readDNSList(argv[1]);
 }
