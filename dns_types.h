@@ -1,6 +1,9 @@
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H
 
+#define MAX_PROVIDER_LENGTH 128
+#define MAX_IP_LENGTH 16
+
 typedef struct dnsheader {
 
     // HEADER SIZE IS 12 BYTES
@@ -13,8 +16,8 @@ typedef struct dnsheader {
 } DNS_HEADER;
 
 typedef struct dnsserver {
-    char *DNSProviderName;
-    char *DNSProviderIP;
+    char DNSProviderName[MAX_PROVIDER_LENGTH];
+    char DNSProviderIP[MAX_IP_LENGTH];
 } dnshost;
 
 #endif
