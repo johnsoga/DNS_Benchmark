@@ -125,7 +125,12 @@ START_TEST (test_ds_removals) {
     ck_assert_pstr_eq((char *)getAt(list, 5)->data, "position-g.com");
     ck_assert_int_eq(list->size, 5);
 
-    clear(list);
+    //clear(list);
+    removeAt(list, 1);
+    removeAt(list, 1);
+    removeAt(list, 1);
+    removeAt(list, 1);
+    removeAt(list, 1);
     ck_assert(isEmpty(list));
     
 } END_TEST
