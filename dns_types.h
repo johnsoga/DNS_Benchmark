@@ -6,14 +6,24 @@
 
 typedef struct dnsheader {
 
-    // HEADER SIZE IS 12 BYTES
-    unsigned short id;          // identification number
+    /* Documented in RFC1035 Section 4.1.1 */
+    
+    unsigned short id;          // Identifier created by caller to match responses to queries
     unsigned short flags;       // flags (qr, opcode, aa, tc, etc.)
     unsigned short qd_count;    // number of entries in question section
     unsigned short an_count;    // number of resource records in answer
     unsigned short ns_count;    // number of name server resource records in authority records section
     unsigned short ar_count;    // number of resource records in additional records section
+
 } DNS_HEADER;
+
+typedef struct dnsquestion {
+
+    unsigned char QNAME[MAX_PROVIDER_LENGTH];
+    unsigned short QTYPE;
+    unsigned short QCLASS;
+
+} DNS_QUESTION;
 
 typedef struct dnsserver {
     char DNSProviderName[MAX_PROVIDER_LENGTH];

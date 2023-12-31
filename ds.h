@@ -5,7 +5,7 @@ typedef struct node {
 } node_t;
 
 typedef struct list {
-    int size;
+    unsigned long size;
     node_t* head;
     node_t* tail;
 } llist;
@@ -41,6 +41,9 @@ extern llist* create_list();
 /* Returns true(1) if the list has no items */
 extern int isEmpty(llist* list);
 
+/* Removes all items from the list */
+extern int destroy(llist* list);
+
 /* Adds an item at pos(1), returns true(1) on success */
 extern int insertFirst(llist* list, void* newItem);
 
@@ -48,7 +51,7 @@ extern int insertFirst(llist* list, void* newItem);
 extern int insertLast(llist* list, void* newItem);
 
 /* Adds an item at pos(n) in the list, returns true(1) on success */
-extern int insertAt(llist* list, void* newItem, int pos);
+extern int insertAt(llist* list, void* newItem, unsigned long pos);
 
 /* Removes an item at pos(1) in the list, returns the removed node */
 extern node_t* removeFirst(llist* list);
@@ -57,7 +60,7 @@ extern node_t* removeFirst(llist* list);
 extern node_t* removeLast(llist* list);
 
 /* Removes an item at pos(n) in the list, returns the removed node */
-extern node_t* removeAt(llist* list, int pos);
+extern node_t* removeAt(llist* list, unsigned long pos);
 
 /* Returns a copy of the item at pos(1) in the list */
 extern node_t* getFirst(llist* list);
@@ -66,7 +69,4 @@ extern node_t* getFirst(llist* list);
 extern node_t* getLast(llist* list);
 
 /* Returns a copy of the item at pos(n) in the list */
-extern node_t* getAt(llist* list, int pos);
-
-/* Removes all items from the list */
-extern int clear(llist* list);
+extern node_t* getAt(llist* list, unsigned long pos);
