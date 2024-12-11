@@ -1,14 +1,15 @@
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H
 
-#define MAX_PROVIDER_LENGTH 128
+#define MAX_DNS_HOSTNAME_LENGTH 128
+#define MAX_PROVIDER_NAME_LENGTH 64
 #define MAX_IP_LENGTH 16
 
 typedef struct dnsheader {
 
     /* Documented in RFC1035 Section 4.1.1 */
     
-    unsigned short id;          // Identifier created by caller to match responses to queries
+    unsigned short id;                     // Identifier created by caller to match responses to queries
     unsigned short flags;       // flags (qr, opcode, aa, tc, etc.)
     unsigned short qd_count;    // number of entries in question section
     unsigned short an_count;    // number of resource records in answer
@@ -19,14 +20,14 @@ typedef struct dnsheader {
 
 typedef struct dnsquestion {
 
-    unsigned char QNAME[MAX_PROVIDER_LENGTH];
+    char QNAME[MAX_DNS_HOSTNAME_LENGTH];
     unsigned short QTYPE;
     unsigned short QCLASS;
 
 } DNS_QUESTION;
 
 typedef struct dnsserver {
-    char DNSProviderName[MAX_PROVIDER_LENGTH];
+    char DNSProviderName[MAX_PROVIDER_NAME_LENGTH];
     char DNSProviderIP[MAX_IP_LENGTH];
 } dnshost;
 
