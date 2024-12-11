@@ -12,7 +12,7 @@ dns.o: dns.c ds.c
 
 prog: dns.o ds.o
 	gcc -g -o main dns.o ds.o
-	./main ipv4_public.txt
+	./main ipv4_public.txt original-top50.txt
 
 check_ds.o: ./tests/check_ds.c ds.c
 	gcc -c ./tests/check_ds.c ds.c
