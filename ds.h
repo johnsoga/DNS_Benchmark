@@ -1,13 +1,15 @@
 typedef struct node {
-    void* data;
     struct node* next;
     struct node* prev;
+    void* data;
+
 } node_t;
 
 typedef struct list {
-    unsigned long size;
     node_t* head;
     node_t* tail;
+    unsigned long size;
+
 } llist;
 
 // Queue's and Stack's are just Linked List's with restrictions on how you interact with them
