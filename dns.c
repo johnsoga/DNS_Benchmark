@@ -23,38 +23,52 @@ struct timespec average_time;
 int DEBUG_ON = 1;
 
 llist* server_list;
+llist* domain_list;
+
 
 // Utility Functions
-void convertToQname(const char *domain, unsigned char *buf) {
+void formatQNAME(const char *fqdn, char qnameBuffer[]) {
 
-    int len; 
-    int offset = 0;
+    short tokenLength;
+    int index = 0;
     int i;
+    char strBuffer[MAX_DNS_HOSTNAME_LENGTH];
+    char *token;
+    char *strSearchString;
+    char *strDelimiter = ".";
 
-    char hostname[MAX_PROVIDER_LENGTH];
-    strncpy(hostname, domain, strlen(domain));
-    char *tmp = hostname, *token;
-    while ((token = strsep(&tmp, ".")) != NULL) {
-        len = strlen(token);
-        printf("%d\n", len);
-        buf[offset++] = (unsigned char)len;
-        for(i = 0; i < len; i++) {
-            buf[offset++] = token[i];
+    strncpy(strBuffer, fqdn, strlen(fqdn)+1);
+    strSearchString = strBuffer;
+    while ((token = strsep(&strSearchString, strDelimiter)) != NULL) {
+        tokenLength = strlen(token);
+        qnameBuffer[index] = tokenLength;
+        index++;
+
+        for(i = 0; i < tokenLength; i++) {
+            qnameBuffer[index] = token[i];
+            index++;
         }
     }
+
+    // printf("Test buffer (before) size %lu\n", strlen(qnameBuffer));
+    qnameBuffer[index++] = 0x00;
+    // printf("Test buffer (after) size %lu\n", strlen(qnameBuffer));
+
+    qnameBuffer[index++] = '\0';
+
 }
 void printList(llist* list) {
     printf("Printing List...\n");
     node_t* tmp = list->head;
     int count = 1;
     while (tmp != NULL) {
-        printf("Element %d:\t %s, %s\n", count, ((dnshost *)tmp->data)->DNSProviderName, ((dnshost *)tmp->data)->DNSProviderIP);
+        // printf("Element %d:\t %s, %s\n", count, ((dnshost *)tmp->data)->DNSProviderName, ((dnshost *)tmp->data)->DNSProviderIP);
+        printf("Element %d:\t -%s-\n", count, ((char *)tmp->data));
         tmp = tmp->next;
         count++;
     }
     printf("\n");
 }
-
 void averageTime(struct timespec new_time) {
 
     count_average_time++;
@@ -97,78 +111,76 @@ void closeConnection() {
         exit(1);
     }
 }
+void printHeader(DNS_HEADER header) {
 
-void createQuery() {
+    // unsigned short flags;       // flags (qr, opcode, aa, tc, etc.)
+    // unsigned short qd_count;    // number of entries in question section
+    // unsigned short an_count;    // number of resource records in answer
+    // unsigned short ns_count;    // number of name server resource records in authority records section
+    // unsigned short ar_count; 
+
+    for(int bit = 31; bit >= 0; bit--) {
+        if(((header.id >> bit) & 1) == 0) {
+            printf("0");
+        } else {
+            printf("1");
+        }
+        if(bit%4 == 0) {
+            printf(" ");
+        }
+    }
+    printf("\n");
+
+    for(int bit = 15; bit >= 0; bit--) {
+        if(((header.flags >> bit) & 1) == 0) {
+            printf("0");
+        } else {
+            printf("1");
+        }
+        if(bit%4 == 0) {
+            printf(" ");
+        }
+    }
+    printf("\n");
+}
+
+void createQuery(char* url) {
 
     int i, message_len, rtn, offset, len, qname_size;
     DNS_HEADER *HEADER = NULL;
     DNS_HEADER MESSAGE_HEADER;
     DNS_QUESTION MESSAGE_QUESTION;
     char rcv_buf[BUFFER_SIZE];
-    qname_size = strlen(host) + 1;
+    qname_size = strlen(url);
     message_len = sizeof(DNS_HEADER) + qname_size + 5;
     unsigned char message[message_len];
     unsigned short flags = 0;
     unsigned short qtype = 0, qclass = 0;
     struct timespec start, end, result;
-    unsigned char xx[12];
+    char xx[MAX_DNS_HOSTNAME_LENGTH];
+    unsigned char test;
     const int HEADER_ID = 0;
     const int HEADER_FLAGS = 16;
     const int HEADER_QDCOUNT = 31;
     const int QUESTION_QNAME = 32;
     const int QUESTION_QTYPE = 44;
     const int QUESTION_QCLASS = 60;
+    int counter;
+    int done;
 
-    /*
-        See RFC 1035 Section 4 for further details not outlined here.
-        The DNS "Message" sections that will be used here are the Header and Question sections. For the Header section below
-        note the inline comments referring to how the fields are used. The "flags" section is made up of multiple individual 
-        flags that needs to be set independently, this is where XOR bitwise modification can be used to set the individual 
-        bits.
-    */
-    
+
     /*
         HEADER section: For further Header information see Section 4.1.1
-
 
         RA, RCODE, ANCOUNT, NSCOUNT, ARCOUNT are invalid to be set for a query so there is no need to set them
         "Z" is FUTURE RESERVED and should only be 0s
     */
-
-    MESSAGE_HEADER.id = (unsigned short)getpid();
-    // printf("%X\n", MESSAGE_HEADER.id);
-    MESSAGE_HEADER.flags = htons((unsigned short)0x0100);
-    MESSAGE_HEADER.qd_count = htons(0x0001);
-    convertToQname(host, xx);
-    printf("%s", xx);
-    // // MESSAGE_QUESTION.QNAME =
-    // MESSAGE_QUESTION.QTYPE = (unsigned short)0x0001;
-    // MESSAGE_QUESTION.QCLASS = (unsigned short)0x0001;
-    // // printf("HEADER ID: %d\n", MESSAGE_HEADER.id);
-    // // printf("HEADER FLAGS: %d\n", MESSAGE_HEADER.flags);
-
-
-    // message[HEADER_ID] = MESSAGE_HEADER.id;
-    // message[HEADER_FLAGS] = MESSAGE_HEADER.flags;
-    // message[HEADER_QDCOUNT] = MESSAGE_HEADER.qd_count;
-    // // message[QUESTION_QNAME] = xx;
-    // strcpy(message[QUESTION_QNAME], xx);
-    // message[QUESTION_QTYPE] = MESSAGE_QUESTION.QTYPE;
-    // message[QUESTION_QCLASS] = MESSAGE_QUESTION.QCLASS;
-
-    // printf("%#08x\n", (unsigned int)message);
-
-    // if((rtn = sendto(socket_fd, (char *)message, message_len, 0, (struct sockaddr*)&server, sizeof(server))) < 0) {
-    //     printf("return value: %d\n", rtn);
-    //     perror("send failed");
-    // }
-
-    // if((rtn = recvfrom(socket_fd, rcv_buf, BUFFER_SIZE, 0, (struct sockaddr*)&server, (socklen_t*)&i)) > 0) {
-    //     clock_gettime(CLOCK_MONOTONIC, &end);
-    // } else {
-    //     printf("rtn value: %d\n", rtn);
-    //     perror("recieve failed");
-    // }
+    MESSAGE_HEADER.id = (unsigned short)arc4random();
+    MESSAGE_HEADER.flags = 0x0100;
+    MESSAGE_HEADER.qd_count = 0x0001;
+    MESSAGE_HEADER.an_count = 0x0000;
+    MESSAGE_HEADER.ns_count = 0x0000;
+    MESSAGE_HEADER.ar_count = 0x0000;
 
     /*
         Question section: For further Header information see Section 4.1.2
@@ -180,6 +192,68 @@ void createQuery() {
 
         0 is always used to terminate the end
     */
+    memset(xx, '\0', sizeof(xx));
+    // printf("size off xx is %lu\n", sizeof(xx));
+    // printf("url is %s\n", url);
+    formatQNAME(url, xx);
+    qname_size = strlen(xx);
+    strncpy(MESSAGE_QUESTION.QNAME, xx, qname_size+1);
+    // printf("xx is -%s-\n", xx);
+    // printf("length of xx is %lu\n", strlen(xx));
+    printf("MESSAGE_QUESTION.QNAME is %s\n", MESSAGE_QUESTION.QNAME);
+    // printf("size is %d\n", qname_size);
+
+    MESSAGE_QUESTION.QTYPE = 0x0001;
+    MESSAGE_QUESTION.QCLASS = 0x0001;
+
+
+    message_len = sizeof(DNS_HEADER) + qname_size + 5;
+    offset = 0;
+    message[offset++] = MESSAGE_HEADER.id;
+    message[offset++] = MESSAGE_HEADER.id>>8;
+    message[offset++] = htons(MESSAGE_HEADER.flags);
+    message[offset++] = htons(MESSAGE_HEADER.flags)>>8;
+    message[offset++] = htons(MESSAGE_HEADER.qd_count);
+    message[offset++] = htons(MESSAGE_HEADER.qd_count)>>8;
+    message[offset++] = htons(MESSAGE_HEADER.an_count);
+    message[offset++] = htons(MESSAGE_HEADER.an_count)>>8;
+    message[offset++] = htons(MESSAGE_HEADER.ns_count);
+    message[offset++] = htons(MESSAGE_HEADER.ns_count)>>8;
+    message[offset++] = htons(MESSAGE_HEADER.ar_count);
+    message[offset++] = htons(MESSAGE_HEADER.ar_count)>>8;
+
+    counter = 0;
+    do {
+
+        message[offset++] = MESSAGE_QUESTION.QNAME[counter++];
+        // printf("%c is %c from QNAME\n", message[offset], MESSAGE_QUESTION.QNAME[counter]);
+
+    } while(message[offset-1] != '\0');
+
+    message[offset++] = htons(MESSAGE_QUESTION.QTYPE);
+    message[offset++] = htons(MESSAGE_QUESTION.QTYPE)>>8;
+    message[offset++] = htons(MESSAGE_QUESTION.QCLASS);
+    message[offset++] = htons(MESSAGE_QUESTION.QCLASS)>>8;
+
+    // counter = 0;
+    // while(counter < 80) {
+    //     printf("character %d is %c\n", counter, message[counter]);
+    //     counter++;
+    // }
+   
+
+    if((rtn = sendto(socket_fd, (char *)message, message_len, 0, (struct sockaddr*)&server, sizeof(server))) < 0) {
+        printf("return value: %d\n", rtn);
+        perror("send failed");
+    }
+
+    if((rtn = recvfrom(socket_fd, rcv_buf, BUFFER_SIZE, 0, (struct sockaddr*)&server, (socklen_t*)&i)) > 0) {
+        // clock_gettime(CLOCK_MONOTONIC, &end);
+        done = 0;
+    } else {
+        printf("rtn value: %d\n", rtn);
+        perror("recieve failed");
+    }
 
     // put the QNAME, QTYPE, and QCLASS info into the buffer
     // offset = sizeof(DNS_HEADER);
@@ -278,32 +352,36 @@ struct timespec sendData() {
 }
 void readDNSList() {
 
-    char str[MAX_LINE_LENGTH];
-    char *token;
-    char buf_ip[MAX_IP_LENGTH], buf_prvd[MAX_PROVIDER_LENGTH];
-    char *server_ip = buf_ip, *provider_name = buf_prvd;
-    struct timespec total_time;
-    struct timespec avg_time;
-    int count;
-    int debug_counter;
+    // char str[MAX_LINE_LENGTH];
+    // char *token;
+    // char buf_ip[MAX_IP_LENGTH], buf_prvd[MAX_PROVIDER_LENGTH];
+    // char *server_ip = buf_ip, *provider_name = buf_prvd;
+    // struct timespec total_time;
+    // struct timespec avg_time;
+    // int count;
+    // int debug_counter;
 
-    char *new_name;
-    char *new_ip;
-    dnshost *new_dnshost;
-    int checker = 1;
+    // char *new_name;
+    // char *new_ip;
+    dnshost *server;
+    char *url;
+    // int checker = 1;
 
-    average_time.tv_sec = 0;
-    average_time.tv_nsec = 0;
+    // average_time.tv_sec = 0;
+    // average_time.tv_nsec = 0;
 
-    while (!isEmpty(server_list)) {
-        new_dnshost = (dnshost *)(removeAt(server_list, 1)->data);
-        printf("Provider: %-15s\tIP: %s\n", new_dnshost->DNSProviderName, new_dnshost->DNSProviderIP);
+    while(!isEmpty(server_list)) {
+        server = (dnshost *)(removeAt(server_list, 1)->data);
+        // printf("Provider: %-15s\tIP: %s\n", server->DNSProviderName, server->DNSProviderIP);
+        createConnection(server->DNSProviderIP);
 
-        // createConnection(new_dnshost->DNSProviderIP);
-        createQuery();
+        while(!isEmpty(domain_list)) {
+            url = (char *)(removeAt(domain_list, 1)->data);
+            createQuery(url);
+        }
         //total_time = sendData();
         // averageTime(total_time);
-        // closeConnection();
+        closeConnection();
     }
 
 /*
@@ -335,14 +413,13 @@ void readDNSList() {
         average_time.tv_nsec = 0;
 */
 }
-
-dnshost* parseDNSServer(char str_buf[]) {
+dnshost* parseData(char str_buf[]) {
 
     int counter;
     int position = 0;
     char buf_ip[MAX_IP_LENGTH];
-    char buf_prvd[MAX_PROVIDER_LENGTH];
-    dnshost* tmp = malloc(sizeof(dnshost));
+    char buf_prvd[MAX_PROVIDER_NAME_LENGTH];
+    dnshost* new_host = malloc(sizeof(dnshost));
 
     // Get the DNS Server IP
     counter = 0;
@@ -352,7 +429,7 @@ dnshost* parseDNSServer(char str_buf[]) {
         } else {
             buf_ip[counter] = '\0';
             //tmp->DNSProviderIP = malloc(sizeof(buf_ip));
-            strcpy(tmp->DNSProviderIP, buf_ip);
+            strcpy(new_host->DNSProviderIP, buf_ip);
             position++;
             break;
         }
@@ -360,15 +437,14 @@ dnshost* parseDNSServer(char str_buf[]) {
         counter++;
     }
 
-    // Get the DNS Server Name
+    // Get the DNS Provider Name
     counter = 0;
     while(1) {
         if(str_buf[position] != ',') {
             buf_prvd[counter] = str_buf[position];
         } else {
             buf_prvd[counter] = '\0';
-            //tmp->DNSProviderName = malloc(sizeof(buf_prvd));
-            strcpy(tmp->DNSProviderName, buf_prvd);
+            strcpy(new_host->DNSProviderName, buf_prvd);
             position++;
             break;
         }
@@ -376,30 +452,89 @@ dnshost* parseDNSServer(char str_buf[]) {
         counter++;
     }
 
-    return tmp;
+    return new_host;
 }
-void loadDNSFile(char* filename) {
+void readNameserverFile(char* filename) {
 
-    FILE *fp;
-    dnshost* dns_server;
-    char str_buf[MAX_LINE_LENGTH];
+    FILE* file;
+    dnshost* nameserver;
+    char lineBuffer[MAX_LINE_LENGTH];
+    int index = 0;
+    int position;
+    char ipBuffer[MAX_IP_LENGTH];
+    char providerBuffer[MAX_PROVIDER_NAME_LENGTH];
 
-    fp = fopen(filename, "r");
-    if (fp == NULL) {
+    file = fopen(filename, "r");
+    if(file == NULL) {
         perror("File Open Error\n");
         exit(1);
     }
 
-    while (fgets(str_buf, MAX_LINE_LENGTH, fp) != NULL) {
-        dns_server = parseDNSServer(str_buf);
-        insertLast(server_list, (void *)dns_server);
+    while (fgets(lineBuffer, MAX_LINE_LENGTH, file) != NULL) {
+        index = 0;
+        memset(ipBuffer, '\0', sizeof(ipBuffer));
+        memset(providerBuffer, '\0', sizeof(providerBuffer));       
+        nameserver = malloc(sizeof(dnshost));
+
+        position = 0;
+        while(lineBuffer[index] != ',') {
+            ipBuffer[position] = lineBuffer[index];
+            index++;
+            position++;
+        }
+        ipBuffer[position] = '\0';
+        strcpy(nameserver->DNSProviderIP, ipBuffer);
+        index++;
+
+        position = 0;
+        while(lineBuffer[index] != ',') {
+            providerBuffer[position] = lineBuffer[index];
+            index++;
+            position++;
+        }
+        providerBuffer[position] = '\0';
+        strcpy(nameserver->DNSProviderName, providerBuffer);
+        index++;
+        
+        insertLast(server_list, (void *)nameserver);
     }
-    fclose(fp);
+
+    fclose(file);
+}
+void readDomainListFile(char* filename) {
+
+    FILE* file;
+    char* url;
+    char lineBuffer[MAX_LINE_LENGTH];
+    int size;
+
+    file = fopen(filename, "r");
+    if(file == NULL) {
+        perror("File Open Error\n");
+        exit(1);
+    }
+
+    while (fgets(lineBuffer, MAX_LINE_LENGTH, file) != NULL) {
+        lineBuffer[strcspn(lineBuffer, "\n")] = 0;
+        size = strlen(lineBuffer);
+        url = malloc(strlen(lineBuffer));
+        strncpy(url, lineBuffer, size);
+        insertLast(domain_list, (void *)url);
+        memset(lineBuffer, '\0', sizeof(lineBuffer));
+    }
+
+    fclose(file);
 }
 int main(int argc, char **argv) {
 
-    server_list = create_list();
-
-    loadDNSFile(argv[1]);
-    readDNSList();
+    if(argc < 3) {
+        printf("Missing Arguemnts!\n");
+    } else {
+        server_list = create_list();
+        domain_list = create_list();
+        readNameserverFile(argv[1]);
+        readDomainListFile(argv[2]);
+        // printList(domain_list);
+        readDNSList();
+    }
 }
